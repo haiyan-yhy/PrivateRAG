@@ -1,0 +1,37 @@
+# Core RAG framework
+llama-index-core>=0.12.17,<0.13.0
+
+# Vector store
+llama-index-vector-stores-chroma>=0.4.0
+chromadb>=0.6.0
+
+# Document readers (PDF + Markdown)
+llama-index-readers-file>=0.4.0
+pypdf>=4.0.0
+
+# ── Provider packages (install the one you need) ───────────────────────────
+
+# # Option A: OpenAI (default)
+# llama-index-llms-openai>=0.3.0
+# llama-index-embeddings-openai>=0.3.0
+# openai>=1.50.0
+
+# Option B: Anthropic (uncomment; still needs OpenAI for embeddings)
+# llama-index-llms-anthropic>=0.6.0
+# anthropic>=0.40.0
+
+# Option C: Ollama (fully local, no API key)
+# llama-index-llms-ollama>=0.5.0
+# llama-index-embeddings-ollama>=0.5.0
+
+# Option D: DeepSeek (OpenAI-compatible API + local HuggingFace embedding)
+llama-index-llms-openai-like>=0.3.0
+llama-index-embeddings-huggingface>=0.5.0
+sentence-transformers>=3.0.0
+
+# Web UI
+streamlit>=1.35.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.60.0

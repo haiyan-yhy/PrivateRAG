@@ -1,0 +1,20 @@
+# Environment
+.env
+.venv/
+__pycache__/
+
+# HuggingFace models (large files)
+BAAI/
+
+# Vector store data
+vectorstore/
+
+# Data (symlinks to local files)
+data/
+
+# Python
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
