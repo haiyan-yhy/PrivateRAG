@@ -9,6 +9,7 @@ import config
 from llm import build_prompt, get_llm_and_embedding
 from retriever import Retriever
 from reranker import Reranker
+from router import router_query
 
 logging.basicConfig(
     level=logging.DEBUG if config.DEBUG else logging.INFO,
@@ -17,11 +18,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def answer(query: str, retriever: Retriever) -> str:
-    reranker = Reranker(model_path=config.RERANK_MODEL)
+def answer(query: str, retriever: Retriever, reranker: Reranker) -> str:
 
+    # router
+    router = router_query(query)
+    print(f"路由器判断：{router}")
+    
     chunks = retriever.retrieve(query)
-    print(f"检索到 {len(chunks)} 个相关片段，正在重新排序...")  # Debug info
     for c in chunks:
         logger.debug("原始检索结果：source=%s score=%.4f\n%s\n", c.source, c.score, c.text[:200])
     chunks = reranker.rerank(query, chunks, top_n=config.RERANK_TOP_N)
@@ -66,6 +69,7 @@ def main() -> None:
 
     try:
         retriever = Retriever()
+        reranker = Reranker(model_path=config.RERANK_MODEL)
     except Exception as exc:
         logger.error("向量库加载失败：%s", exc)
         logger.error("请先运行 python ingest.py 建立索引。")
@@ -86,7 +90,7 @@ def main() -> None:
 
         print("\n思考中...\n")
         try:
-            reply = answer(query, retriever)
+            reply = answer(query, retriever, reranker)
             print(reply)
         except Exception as exc:
             logger.error("回答生成失败：%s", exc)

@@ -9,7 +9,10 @@ from typing import List
 import chromadb
 from llama_index.core import VectorStoreIndex
 from llama_index.core import Settings
+from llama_index.core.schema import TextNode
 from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.retrievers.bm25 import BM25Retriever
+from llama_index.core.retrievers import QueryFusionRetriever
 
 import config
 from llm import get_llm_and_embedding
@@ -36,7 +39,24 @@ class Retriever:
         )
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         index = VectorStoreIndex.from_vector_store(vector_store)
-        self._retriever = index.as_retriever(similarity_top_k=config.TOP_K)
+        vector_retriever = index.as_retriever(similarity_top_k=config.TOP_K * 2)
+
+        raw = chroma_collection.get(include=["documents", "metadatas"])
+        bm25_nodes = [
+            TextNode(text=doc, metadata=meta or {})
+            for doc, meta in zip(raw["documents"], raw["metadatas"])
+        ]
+        bm25_retriever = BM25Retriever.from_defaults(
+                            nodes=bm25_nodes,
+                            similarity_top_k=config.TOP_K * 2,
+                            )
+        self._retriever = QueryFusionRetriever(
+                            retrievers=[vector_retriever, bm25_retriever],
+                            similarity_top_k=config.TOP_K,
+                            num_queries=3,
+                            mode="reciprocal_rerank",  # RRF
+                            use_async=False,
+                            )
 
     def retrieve(self, query: str) -> List[RetrievedChunk]:
         nodes = self._retriever.retrieve(query)
