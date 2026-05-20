@@ -14,7 +14,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent))
 
 import config
-from llm import build_prompt, get_llm_and_embedding
+from llm import build_chat_messages, get_llm_and_embedding
 from llama_index.core import Settings
 
 # ── Page config ────────────────────────────────────────────────────────────
@@ -119,9 +119,15 @@ if query:
                 context = "\n\n".join(
                     f"[{i}] {c.text}" for i, c in enumerate(chunks, 1)
                 )
-                prompt = build_prompt(query=query, context=context)
-                response = Settings.llm.complete(prompt)
-                reply = str(response).strip()
+                # 取最近 10 条历史（排除本轮刚追加的 user 消息）
+                history = [
+                    {"role": m["role"], "content": m["content"]}
+                    for m in st.session_state.messages[:-1]
+                    if m["role"] in ("user", "assistant")
+                ][-10:]
+                messages = build_chat_messages(query=query, context=context, history=history)
+                response = Settings.llm.chat(messages)
+                reply = str(response.message.content).strip()
 
                 sources = list(dict.fromkeys(c.source for c in chunks))
                 source_line = "【来源】" + "、".join(sources)

@@ -125,3 +125,25 @@ def get_llm_and_embedding() -> Tuple[LLM, BaseEmbedding]:
 
 def build_prompt(query: str, context: str) -> str:
     return PROMPT_TEMPLATE.format(context=context, query=query)
+
+
+def build_chat_messages(query: str, context: str, history: list[dict]):
+    from llama_index.core.llms import ChatMessage, MessageRole
+
+    system_content = (
+        "你是一个基于知识库回答问题的 AI 助手。\n"
+        "请严格基于下面提供的上下文回答问题。\n"
+        "如果上下文中没有答案，请明确回答："我无法从当前知识库中找到答案。"\n\n"
+        f"【上下文】\n{context}\n\n"
+        "【回答要求】\n"
+        "1. 只基于上下文回答\n"
+        "2. 不允许编造信息\n"
+        "3. 尽量简洁清晰\n"
+        "4. 最后附上引用来源（文件名）"
+    )
+    messages = [ChatMessage(role=MessageRole.SYSTEM, content=system_content)]
+    for msg in history:
+        role = MessageRole.USER if msg["role"] == "user" else MessageRole.ASSISTANT
+        messages.append(ChatMessage(role=role, content=msg["content"]))
+    messages.append(ChatMessage(role=MessageRole.USER, content=query))
+    return messages
